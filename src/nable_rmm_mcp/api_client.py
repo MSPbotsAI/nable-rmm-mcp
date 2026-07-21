@@ -53,7 +53,16 @@ class NableClient:
 
     def __init__(self, api_key: str, base_url: str = DEFAULT_BASE_URL):
         self._api_key = api_key
-        self._base_url = base_url.rstrip("/")
+        self._base_url = self._normalize_base_url(base_url)
+
+    @staticmethod
+    def _normalize_base_url(base_url: str) -> str:
+        base_url = base_url.strip().rstrip("/")
+        # The "URL" field on the app.mspbots.ai integration form is freeform
+        # text — real tenant configs may omit the scheme (e.g. "www.systemmonitor.us").
+        if not base_url.startswith(("http://", "https://")):
+            base_url = f"https://{base_url}"
+        return base_url
 
     async def call(self, service: str, params: dict | None = None) -> Any:
         query: dict[str, Any] = {"apikey": self._api_key, "service": service}
