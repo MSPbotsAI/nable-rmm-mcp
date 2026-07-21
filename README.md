@@ -119,7 +119,7 @@ Connect your MCP client with:
 | `nable_rmm_get_outages` | 列出设备的 outage 记录(开放中或近61天内关闭) | `deviceid` (必填, int) |
 | `nable_rmm_get_drive_space_history` | 磁盘空间检查历史(基于 list_checks 按 check_type 1003/1004 过滤,N-sight 无独立服务) | `deviceid` (必填, int) |
 | `nable_rmm_get_patch_list` | 列出设备上的所有补丁及状态/严重程度 | `deviceid` (必填, int) |
-| `nable_rmm_get_performance_history` | 设备历史性能指标(带宽/磁盘/CPU/内存/网卡) | `deviceid` (必填, int), `interval?`, `since?` |
+| `nable_rmm_get_performance_history` | 设备历史性能指标(带宽/磁盘/CPU/内存/网卡) | `deviceid` (必填, int), `interval` (必填, int, 只能是 15 或 60), `since?` |
 
 ## 测试示例 (Test Example)
 
@@ -171,7 +171,14 @@ Expected shape of a successful result (the underlying XML response, converted to
 - [Generate an API Key](https://developer.n-able.com/n-sight/docs/generate-an-api-key)
 - [Determine the server for your API query](https://developer.n-able.com/n-sight/docs/determine-server-for-api-query)
 
+## Verified Against a Live Account
+
+All 14 read tools have been exercised end-to-end against a real N-able RMM account (US region) and returned real data, including edge cases N-able's public docs left ambiguous:
+- `nable_rmm_get_performance_history`'s `interval` parameter is **required** (not optional as the docs example implied) and only accepts `15` or `60` — confirmed via the API's own validation error (`Invalid "interval": must be 15 or 60 (minutes)`).
+- `nable_rmm_get_agentless_assets` returns empty `items` on this account, consistent with N-able's note that the feature is deprecated.
+
+The two write tools (`nable_rmm_create_client`, `nable_rmm_create_site`) were **not** exercised against the live account to avoid creating real data in a production customer's N-able RMM tenant — verify these against a disposable test account before relying on them.
+
 ## Known Gaps / Not Implemented
 
 - `get_site_installation_package` — returns a binary installer download rather than structured data, not practical as an MCP tool.
-- `interval` on `nable_rmm_get_performance_history` — accepted values aren't fully documented publicly; passed through as-is.

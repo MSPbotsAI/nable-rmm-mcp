@@ -143,7 +143,7 @@ def register(mcp: FastMCP, client_factory: Callable[[], NableClient | None]) -> 
     @mcp.tool()
     async def nable_rmm_get_performance_history(
         deviceid: int,
-        interval: str | None = None,
+        interval: int,
         since: str | None = None,
     ) -> str:
         """Get historical performance metrics for a device (bandwidth, disk,
@@ -156,9 +156,10 @@ def register(mcp: FastMCP, client_factory: Callable[[], NableClient | None]) -> 
         Args:
             deviceid: Device ID — from nable_rmm_get_devices_at_client,
                 nable_rmm_get_servers, or nable_rmm_get_workstations.
-            interval: Optional — accepted values are not fully documented by
-                N-able's public API reference; pass through only if you have
-                a confirmed value for your account.
+            interval: Required. Must be 15 or 60 (minutes) — confirmed
+                against a live account; N-able's public docs only show this
+                as a placeholder in the example URL without documenting
+                valid values.
             since: Optional date/time to limit results to data newer than
                 this point, to avoid re-fetching the full 8-day history.
         """
