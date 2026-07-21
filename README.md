@@ -38,19 +38,14 @@ No token is required for the health endpoint.
 
 ## 授权参数说明 (Authentication)
 
-Every request to `/mcp` must include a valid API key:
+Every request to `/mcp` must include the following HTTP headers. Header naming mirrors the fields on the existing "N-able RMM" integration form in app.mspbots.ai (**API Token** / **URL**).
 
-```
-X-Nable-Api-Token: <api_key>
-```
+| Header | 类型 | 是否必填 | 默认值 | 枚举值 | 字段描述 | Example |
+|---|---|---|---|---|---|---|
+| `X-Nable-Api-Token` | string | 必填 | 无 | 无(自由文本) | N-able RMM API key,在 **Settings > General Settings > API > Generate** 生成。若 key 被限定到某个 client group,调用只返回该组内客户的数据。 | `X-Nable-Api-Token: <your_api_key>` |
+| `X-Nable-Server` | string | 可选 | `NABLE_BASE_URL` 环境变量(默认 `https://www.am.remote.management`) | 见下方 11 个地区服务器列表 | N-able RMM 按账号所属地区分为 11 个独立服务器,不带该 header 时用环境变量默认值;网关同时服务多地区租户时按请求覆盖。 | `X-Nable-Server: https://www.systemmonitor.co.uk` |
 
-Header naming mirrors the fields on the existing "N-able RMM" integration form in app.mspbots.ai (**API Token** / **URL**). Generate the key in the N-able RMM dashboard: **Settings > General Settings > API > Generate**. If the key is scoped to a client group, calls only return data for clients in that group.
-
-N-able RMM has **11 regional servers** — the account's territory determines which one to call. Set a default via `NABLE_BASE_URL`, or override per-request (useful for a gateway serving tenants across regions), mirroring the "URL" field on the app.mspbots.ai integration form:
-
-```
-X-Nable-Server: https://www.systemmonitor.co.uk
-```
+`X-Nable-Server` 的 11 个枚举值(地区 → Base URL):
 
 | Region | Base URL |
 |---|---|
