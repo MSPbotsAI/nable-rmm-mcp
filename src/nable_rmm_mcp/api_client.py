@@ -70,11 +70,20 @@ class NableClient:
             if value is not None:
                 query[key] = value
 
-        async with httpx.AsyncClient() as client:
-            resp = await client.get(f"{self._base_url}/api/", params=query)
-            if resp.status_code >= 400:
-                raise NableError(f"HTTP {resp.status_code}: {resp.text[:300]}")
-            return self._parse(resp.text)
+        target = f"{self._base_url}/api/"
+        try:
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(target, params=query)
+        except httpx.RequestError as e:
+            # Transport-level failures (DNS resolution, connection refused,
+            # timeout) happen before any HTTP response — surface the exact
+            # target URL so a misconfigured/unreachable base_url is
+            # diagnosable without needing shell access to the deployment.
+            raise NableError(f"Could not reach {target!r}: {e}") from None
+
+        if resp.status_code >= 400:
+            raise NableError(f"HTTP {resp.status_code}: {resp.text[:300]}")
+        return self._parse(resp.text)
 
     def _parse(self, xml_text: str) -> Any:
         try:
