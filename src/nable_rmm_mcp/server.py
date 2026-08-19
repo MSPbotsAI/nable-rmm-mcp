@@ -83,6 +83,26 @@ def create_mcp_server(settings: Settings) -> FastMCP:
     # correctly behind a reverse proxy or docker network.
     mcp = FastMCP(
         name="nable-rmm-mcp",
+        instructions=(
+            "N-able RMM (aka N-sight) is an MSP remote monitoring and management "
+            "platform: clients (customers) contain sites, sites contain devices "
+            "(servers/workstations/mobile), and each device runs monitoring checks "
+            "that can pass, fail, or generate outages. Three tool domains: "
+            "clients_sites (nable_rmm_get_clients, nable_rmm_get_sites, plus "
+            "nable_rmm_create_client/create_site) resolve the client/site hierarchy "
+            "and provide the clientid/siteid other tools need; devices "
+            "(nable_rmm_get_devices_at_client, nable_rmm_get_servers, "
+            "nable_rmm_get_workstations, nable_rmm_get_agentless_assets, "
+            "nable_rmm_get_device_monitoring_details) list and inspect devices and "
+            "yield the deviceid used by check-level tools; checks "
+            "(nable_rmm_get_failing_checks, nable_rmm_get_checks, "
+            "nable_rmm_get_check_config, nable_rmm_get_outages, "
+            "nable_rmm_get_drive_space_history, nable_rmm_get_patch_list, "
+            "nable_rmm_get_performance_history) report monitoring/health data for a "
+            "device. Typical flow: nable_rmm_get_clients -> nable_rmm_get_sites -> "
+            "nable_rmm_get_servers/get_workstations -> checks tools on a deviceid. "
+            "All tools are read-only except the two create_* tools."
+        ),
         transport_security=TransportSecuritySettings(enable_dns_rebinding_protection=False),
     )
 

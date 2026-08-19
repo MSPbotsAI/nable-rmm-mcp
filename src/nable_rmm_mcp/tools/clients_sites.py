@@ -1,73 +1,79 @@
-import json
 from collections.abc import Callable
+from typing import Annotated
 
 from mcp.server.fastmcp import FastMCP
+from mcp.types import ToolAnnotations
+from pydantic import Field
 
+from .._json import dump_json_capped
 from ..api_client import NableClient, NableError
-
-_NO_TOKEN = "Error: No N-able RMM API key. Send the X-Nable-Api-Token header."
+from ._common import NO_TOKEN
 
 
 def register(mcp: FastMCP, client_factory: Callable[[], NableClient | None]) -> None:
 
-    @mcp.tool()
-    async def nable_rmm_get_clients(devicetype: str | None = None) -> str:
-        """List all clients (customers) visible to this N-able RMM API key.
-
-        Args:
-            devicetype: Filter to clients with active devices of this type.
-                One of "server", "workstation", "mobile_device". N-able RMM
-                defaults to "server" if omitted — pass explicitly to avoid
-                missing clients that only have workstations/mobile devices.
-        """
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
+    async def nable_rmm_get_clients(
+        devicetype: Annotated[
+            str | None,
+            Field(
+                description='One of "server", "workstation", "mobile_device". N-able RMM '
+                'defaults to "server" if omitted, which can hide clients that only have '
+                "workstations/mobile devices — pass explicitly to see all clients."
+            ),
+        ] = None,
+    ) -> str:
+        """List all clients (customers) visible to this N-able RMM API key."""
         client = client_factory()
         if client is None:
-            return _NO_TOKEN
+            return NO_TOKEN
         try:
             result = await client.call("list_clients", {"devicetype": devicetype})
-            return json.dumps(result, indent=2)
+            return dump_json_capped(result)
         except NableError as e:
-            return f"Error: {e}"
+            return e.to_envelope()
 
-    @mcp.tool()
-    async def nable_rmm_get_sites(clientid: int) -> str:
-        """List all sites under a client.
-
-        Args:
-            clientid: Client ID, from nable_rmm_get_clients.
-        """
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
+    async def nable_rmm_get_sites(
+        clientid: Annotated[int, Field(description="Client ID, from nable_rmm_get_clients.")],
+    ) -> str:
+        """List all sites under a client."""
         client = client_factory()
         if client is None:
-            return _NO_TOKEN
+            return NO_TOKEN
         try:
             result = await client.call("list_sites", {"clientid": clientid})
-            return json.dumps(result, indent=2)
+            return dump_json_capped(result)
         except NableError as e:
-            return f"Error: {e}"
+            return e.to_envelope()
 
-    @mcp.tool()
+    @mcp.tool(
+        annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=False, idempotentHint=False)
+    )
     async def nable_rmm_create_client(
-        name: str,
-        timezone: str | None = None,
-        officehoursemail: str | None = None,
-        officehourssms: str | None = None,
-        outofofficehoursemail: str | None = None,
-        outofofficehourssms: str | None = None,
+        name: Annotated[
+            str, Field(description="Name of the new client. Must be unique, or N-able RMM errors.")
+        ],
+        timezone: Annotated[
+            str | None, Field(description='Timezone identifier, e.g. "Europe/Madrid".')
+        ] = None,
+        officehoursemail: Annotated[
+            str | None, Field(description="Alert email address during office hours.")
+        ] = None,
+        officehourssms: Annotated[
+            str | None, Field(description="Alert phone number (SMS) during office hours.")
+        ] = None,
+        outofofficehoursemail: Annotated[
+            str | None, Field(description="Alert email address outside office hours.")
+        ] = None,
+        outofofficehourssms: Annotated[
+            str | None, Field(description="Alert phone number (SMS) outside office hours.")
+        ] = None,
     ) -> str:
-        """Create a new client (customer) in N-able RMM.
-
-        Args:
-            name: Name of the new client. Must be unique — a duplicate name
-                returns an error from N-able RMM.
-            timezone: Timezone identifier, e.g. "Europe/Madrid".
-            officehoursemail: Alert email address during office hours.
-            officehourssms: Alert phone number (SMS) during office hours.
-            outofofficehoursemail: Alert email address outside office hours.
-            outofofficehourssms: Alert phone number (SMS) outside office hours.
-        """
+        """Create a new client (customer) in N-able RMM. Adds a record; does not modify or delete anything."""
         client = client_factory()
         if client is None:
-            return _NO_TOKEN
+            return NO_TOKEN
         try:
             result = await client.call(
                 "add_client",
@@ -80,34 +86,35 @@ def register(mcp: FastMCP, client_factory: Callable[[], NableClient | None]) -> 
                     "outofofficehourssms": outofofficehourssms,
                 },
             )
-            return json.dumps(result, indent=2)
+            return dump_json_capped(result)
         except NableError as e:
-            return f"Error: {e}"
+            return e.to_envelope()
 
-    @mcp.tool()
+    @mcp.tool(
+        annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=False, idempotentHint=False)
+    )
     async def nable_rmm_create_site(
-        clientid: int,
-        sitename: str,
-        router1: str | None = None,
-        router2: str | None = None,
-        workstationtemplate: str | None = None,
-        servertemplate: str | None = None,
+        clientid: Annotated[int, Field(description="The client to create the site under.")],
+        sitename: Annotated[str, Field(description="Name of the new site.")],
+        router1: Annotated[
+            str | None, Field(description="Primary router IP/hostname for connectivity checks.")
+        ] = None,
+        router2: Annotated[
+            str | None, Field(description="Secondary router IP/hostname (dual routing).")
+        ] = None,
+        workstationtemplate: Annotated[
+            str | None,
+            Field(description='Workstation check template ID, "off", or "inherit" (default).'),
+        ] = None,
+        servertemplate: Annotated[
+            str | None,
+            Field(description='Server check template ID, "off", or "inherit" (default).'),
+        ] = None,
     ) -> str:
-        """Create a new site under an existing client.
-
-        Args:
-            clientid: The client to create the site under.
-            sitename: Name of the new site.
-            router1: Primary router IP/hostname for connectivity checks.
-            router2: Secondary router IP/hostname (dual routing).
-            workstationtemplate: Workstation check template id, "off", or
-                "inherit" (default).
-            servertemplate: Server check template id, "off", or "inherit"
-                (default).
-        """
+        """Create a new site under an existing client. Adds a record; does not modify or delete anything."""
         client = client_factory()
         if client is None:
-            return _NO_TOKEN
+            return NO_TOKEN
         try:
             result = await client.call(
                 "add_site",
@@ -120,6 +127,6 @@ def register(mcp: FastMCP, client_factory: Callable[[], NableClient | None]) -> 
                     "servertemplate": servertemplate,
                 },
             )
-            return json.dumps(result, indent=2)
+            return dump_json_capped(result)
         except NableError as e:
-            return f"Error: {e}"
+            return e.to_envelope()

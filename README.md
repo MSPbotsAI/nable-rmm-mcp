@@ -31,7 +31,7 @@ python -m nable_rmm_mcp
 
 ```bash
 curl http://localhost:8080/health
-# {"status": "ok", "service": "nable-rmm-mcp", "transport": "http"}
+# {"status": "ok"}
 ```
 
 No token is required for the health endpoint.
