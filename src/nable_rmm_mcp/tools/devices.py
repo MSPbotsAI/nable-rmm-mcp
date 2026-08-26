@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import Annotated
+from typing import Annotated, Literal
 
 from mcp.server.fastmcp import FastMCP
 from mcp.types import ToolAnnotations
@@ -17,7 +17,9 @@ def register(mcp: FastMCP, client_factory: Callable[[], NableClient | None]) -> 
     @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
     async def nable_rmm_get_devices_at_client(
         clientid: Annotated[int, Field(description="Client ID, from nable_rmm_get_clients.")],
-        devicetype: Annotated[str, Field(description=_DEVICE_TYPE_DESC)],
+        devicetype: Annotated[
+            Literal["server", "workstation", "mobile_device"], Field(description=_DEVICE_TYPE_DESC)
+        ],
     ) -> str:
         """List devices of a given type across all sites for a client."""
         client = client_factory()

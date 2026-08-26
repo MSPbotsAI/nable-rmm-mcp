@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import Annotated
+from typing import Annotated, Literal
 
 from mcp.server.fastmcp import FastMCP
 from mcp.types import ToolAnnotations
@@ -151,7 +151,8 @@ def register(mcp: FastMCP, client_factory: Callable[[], NableClient | None]) -> 
             Field(description="Device ID, from nable_rmm_get_devices_at_client/get_servers/get_workstations."),
         ],
         interval: Annotated[
-            int, Field(description="Must be 15 or 60 (minutes); no other value is accepted.")
+            Literal[15, 60],
+            Field(description="Must be 15 or 60 (minutes); no other value is accepted."),
         ],
         since: Annotated[
             str | None,

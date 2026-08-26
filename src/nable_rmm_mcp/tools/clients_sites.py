@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import Annotated
+from typing import Annotated, Literal
 
 from mcp.server.fastmcp import FastMCP
 from mcp.types import ToolAnnotations
@@ -15,7 +15,7 @@ def register(mcp: FastMCP, client_factory: Callable[[], NableClient | None]) -> 
     @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
     async def nable_rmm_get_clients(
         devicetype: Annotated[
-            str | None,
+            Literal["server", "workstation", "mobile_device"] | None,
             Field(
                 description='One of "server", "workstation", "mobile_device". N-able RMM '
                 'defaults to "server" if omitted, which can hide clients that only have '
